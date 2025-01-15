@@ -5,23 +5,24 @@ sequence:
 3) pipeline: CustomTransformer, OneHotEncoder, TargetEncoder, model
 """
 
+import src.config
 import numpy as np
 import pandas as pd
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from category_encoders import TargetEncoder
 from category_encoders.one_hot import OneHotEncoder
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # from collections import Counter
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
-OHE_COLS = ["action", "gender", "exp_group", "os", "source"]
+OHE_COLS = ["gender", "exp_group", "os", "source"]
 MTE_COLS = ["city", "topic"]
 
 
 def select_data_csv(
-    save_path: str | None,
+    save_path: Optional[str],
     users_path: str = "./data/raw/users.csv",
     posts_path: str = "./data/raw/posts.csv",
     feed_data_path: str = "./data/raw/feed_data.csv",
@@ -72,8 +73,8 @@ def select_data_csv(
     return data
 
 
-def select_sql_data(
-    save_path: str | None,
+def select_data_csv(
+    save_path: Optional[str],
     engine: Any,
     method: Literal["stratified", "random"] = "stratified",
     seed: int = 0.42,
@@ -96,9 +97,9 @@ def select_sql_data(
     users = pd.read_sql("SELECT * FROM user_data", con=engine, index_col="user_id")
     posts = pd.read_sql("SELECT * FROM post_text_df", con=engine, index_col="post_id")
     if method == "stratified":
-        feed_data = select_sql_stratified(seed, engine, count, chunksize)
+        feed_data = select_stratified_sql(seed, engine, count, chunksize)
     elif method == "random":
-        feed_data = select_sql_random(seed, engine, count, chunksize)
+        feed_data = select_random_sql(seed, engine, count, chunksize)
     else:
         raise ValueError(f"There is no such method as {method}")
 
@@ -113,7 +114,7 @@ def select_sql_data(
     return data
 
 
-def select_sql_stratified(
+def select_stratified_sql(
     seed: int, engine: Any, count: int, chunksize: int
 ) -> pd.DataFrame:
     """типический отбор по столбцу target. Сохраняет пропорции количеств 1 и 0 в target у юзеров"""
@@ -160,7 +161,7 @@ def select_sql_stratified(
     return feed_data
 
 
-def select_sql_random(
+def select_random_sql(
     seed: int, engine: Any, count: int, chunksize: int
 ) -> pd.DataFrame:
     """случайный отбор"""
@@ -220,15 +221,35 @@ class CustomTransformer(BaseEstimator, TransformerMixin):
         text_length (bool, optional): add text_length as new feature. Defaults to True
     """
 
-    drop_cols: list = ["text", "user_id", "post_id", "timestamp", "country"]
+    drop_cols: list = field(
+        default_factory=lambda: [
+            "text",
+            "user_id",
+            "post_id",
+            "timestamp",
+            "country",
+            "action",
+        ]
+    )
     user_avg_actions_per_day: bool = True
     user_target_ratio: bool = True
     user_like_ratio: bool = True
     text_length: bool = True
 
-    def fit(self, X: pd.DataFrame, y: pd.Series):
-        X_ = X.copy()
-        y_ = y.copy()
+    def fit(self, X: pd.DataFrame, y: pd.Series, copy: bool = True):
+        """fit
+
+        Args:
+            X (pd.DataFrame): features
+            y (pd.Series): target
+            copy (bool, optional): копировать ли данные, перед их обработкой
+        """
+        if copy:
+            X_ = X.copy()
+            y_ = y.copy()
+        else:
+            X_ = X
+            y_ = y
 
         data = pd.concat([X_, y_], axis=1)
 

@@ -1,8 +1,7 @@
 data/
 .venv/
 temp/
-
-.*/__pycache__
-
+__pycache__/
+catboost_info/
 notebooks/Practice_22.ipynb
 models/*

@@ -1,3 +1,4 @@
+import src.config
 import pandas as pd
 import pickle
 import joblib

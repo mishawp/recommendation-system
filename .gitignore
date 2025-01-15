@@ -1,0 +1,8 @@
+data/
+.venv/
+temp/
+
+.*/__pycache__
+
+notebooks/Practice_22.ipynb
+models/*

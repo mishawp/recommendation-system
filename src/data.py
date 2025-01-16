@@ -295,7 +295,7 @@ class CustomTransformer(BaseEstimator, TransformerMixin):
         if self.drop_cols:
             X_.drop(self.drop_cols, axis=1, inplace=True)
 
-        return X_
+        return X_.sort_index(axis=1)
 
 
 def transform_data(

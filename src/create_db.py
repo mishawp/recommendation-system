@@ -40,6 +40,8 @@ def construct_features(
             .drop_duplicates()
             .copy()
         )
+        if save_path is not None:
+            table_likes_df.to_csv(f"{save_path}table_likes.csv", index=False)
     # -----------------------------------------------------------
 
     # -----------------------------------------------------------
@@ -53,23 +55,27 @@ def construct_features(
         users = pd.read_csv("./data/raw/users.csv", index_col="user_id")
         users.drop("country", axis=1, inplace=True)
         table_users_df = users.join(custom_trans.new_features_user)
+        if save_path is not None:
+            table_users_df.to_csv(f"{save_path}table_users.csv", index=True)
     # -----------------------------------------------------------
 
     # -----------------------------------------------------------
     if create_posts_features:
         posts = pd.read_csv("./data/raw/posts.csv", index_col="post_id")
         posts["length"] = posts["text"].str.len()
-        table_posts_df = posts.drop("text", axis=1)
+        table_posts_df = posts
+        if save_path is not None:
+            table_posts_df.to_csv(f"{save_path}table_posts.csv", index=True)
     # -----------------------------------------------------------
-
-    if save_path is not None:
-        table_likes_df.to_csv(f"{save_path}table_likes.csv", index=False)
-        table_users_df.to_csv(f"{save_path}table_users.csv", index=True)
-        table_posts_df.to_csv(f"{save_path}table_posts.csv", index=True)
 
     return tuple(
         filter(
-            lambda x: x is not None, (table_users_df, table_posts_df, table_likes_df)
+            lambda x: x is not None,
+            (
+                table_users_df.reset_index(),
+                table_posts_df.reset_index(),
+                table_likes_df,
+            ),
         )
     )
 
@@ -123,11 +129,14 @@ if __name__ == "__main__":
         "postgres.lab.karpov.courses:6432/startml"
     )
 
-    tables_names = [TABLE_USERS, TABLE_POSTS, TABLE_LIKES]
-    tables_df = (
-        pd.read_csv("./data/processed/table_users.csv"),
-        pd.read_csv("./data/processed/table_posts.csv"),
-        pd.read_csv("./data/processed/table_likes.csv"),
+    tables_names = [TABLE_POSTS]
+    # tables_df = (
+    #     pd.read_csv("./data/processed/table_users.csv"),
+    #     pd.read_csv("./data/processed/table_posts.csv"),
+    #     pd.read_csv("./data/processed/table_likes.csv"),
+    # )
+    tables_df = construct_features(
+        create_likes_table=False, create_users_features=False
     )
     tables = dict(zip(tables_names, tables_df))
     push_to_db(tables, engine)

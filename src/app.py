@@ -27,7 +27,7 @@ def get_model_path(path: str) -> str:
 
 def load_models():
     model_path = get_model_path(
-        r"C:\Users\MishaV\Desktop\karpov\ML\L22\models\main.cbm"
+        r"C:\Users\MishaV\Desktop\karpov\ML\L22\models\embeddings.cbm"
     )
     model = CatBoostClassifier()
     model.load_model(model_path)

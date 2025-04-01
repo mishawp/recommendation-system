@@ -129,14 +129,14 @@ if __name__ == "__main__":
         "postgres.lab.karpov.courses:6432/startml"
     )
 
-    tables_names = [TABLE_POSTS]
-    # tables_df = (
-    #     pd.read_csv("./data/processed/table_users.csv"),
-    #     pd.read_csv("./data/processed/table_posts.csv"),
-    #     pd.read_csv("./data/processed/table_likes.csv"),
-    # )
-    tables_df = construct_features(
-        create_likes_table=False, create_users_features=False
+    tables_names = [TABLE_USERS, TABLE_POSTS, TABLE_LIKES]
+    tables_df = (
+        pd.read_csv("./data/processed/table_users.csv"),
+        pd.read_csv("./data/processed/table_posts.csv"),
+        pd.read_csv("./data/processed/table_likes.csv"),
     )
+    # tables_df = construct_features(
+    #     create_likes_table=False, create_users_features=False
+    # )
     tables = dict(zip(tables_names, tables_df))
     push_to_db(tables, engine)
